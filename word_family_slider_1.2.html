@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Word Family Slider</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #FAF9F6;
+    color: #2C2C2A;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .topbar {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .stars {
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .star-icon { font-size: 22px; }
+  #newFamilyBtn {
+    background: #FFFFFF;
+    border: 1px solid #D3D1C7;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #2C2C2A;
+    touch-action: manipulation;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  #newFamilyBtn:active { background: #F1EFE8; }
+  .game-card {
+    width: 100%;
+    max-width: 600px;
+    background: #FFFFFF;
+    border-radius: 20px;
+    border: 1px solid #E5E3DA;
+    padding: 48px 20px;
+    text-align: center;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .arrow-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #F1EFE8;
+    border: none;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #534AB7;
+    touch-action: manipulation;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .instructions {
+    width: 100%;
+    max-width: 600px;
+    background: #EEEDFE;
+    border: 1px solid #D3D1C7;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .instructions p {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    color: #26215C;
+    line-height: 1.5;
+  }
+  .instructions .sub {
+    margin-top: 4px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #5F5E5A;
+  }
+  .swipe-hint {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #7F77DD;
+    font-size: 16px;
+    pointer-events: none;
+  }
+  .swipe-hint.up { top: 6px; }
+  .swipe-hint.down { bottom: 6px; }
+  #letterBox { position: relative; }
+  #letterBox {
+    width: 130px;
+    height: 130px;
+    background: #EEEDFE;
+    border: 2px solid #AFA9EC;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 68px;
+    font-weight: 700;
+    color: #26215C;
+    margin: 0 16px;
+    touch-action: none;
+  }
+  #rimeBox {
+    font-size: 68px;
+    font-weight: 700;
+    color: #888780;
+  }
+  .feedback {
+    min-height: 150px;
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #wordRevealWrap {
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.25s, transform 0.25s;
+  }
+  #wordImage {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 8px;
+  }
+  #wordImage svg { width: 100%; height: 100%; display: block; }
+  #wordReveal {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: #0F6E56;
+  }
+  .found-section {
+    width: 100%;
+    max-width: 600px;
+    margin-top: 24px;
+  }
+  .found-label {
+    font-size: 14px;
+    color: #5F5E5A;
+    margin-bottom: 10px;
+  }
+  #chipRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 36px;
+  }
+  .chip {
+    background: #E1F5EE;
+    color: #085041;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+  .hint {
+    max-width: 600px;
+    font-size: 14px;
+    color: #888780;
+    text-align: center;
+    margin-top: 20px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="instructions">
+  <p>&#8593; Swipe the letter up or down &#8595;</p>
+  <p class="sub">Find a real word to see it, hear it, and win a star!</p>
+</div>
+
+<div class="topbar">
+  <div class="stars"><span class="star-icon">&#9733;</span><span id="starCount">0</span><span style="font-size:14px;color:#5F5E5A;font-weight:400;">words found</span></div>
+  <button id="newFamilyBtn">New family &#8594;</button>
+</div>
+
+<div class="game-card">
+  <div class="slider-row">
+    <button class="arrow-btn" id="upBtn" aria-label="Previous letter">&#9650;</button>
+    <div id="letterBox"><span class="swipe-hint up">&#8963;</span><span id="letterChar">c</span><span class="swipe-hint down">&#8964;</span></div>
+    <div id="rimeBox">at</div>
+    <button class="arrow-btn" id="downBtn" aria-label="Next letter">&#9660;</button>
+  </div>
+  <div class="feedback">
+    <div id="wordRevealWrap">
+      <div id="wordImage"></div>
+      <span id="wordReveal"></span>
+    </div>
+  </div>
+</div>
+
+<div class="found-section">
+  <p class="found-label">Words found in this family</p>
+  <div id="chipRow"></div>
+</div>
+
+<p class="hint">Tap the arrows or drag the letter up and down to find real words</p>
+
+<script>
+const families = [
+  { rime: "at", letters: ["c","b","h","m","s","r","d","g"], real: ["cat","bat","hat","mat","sat","rat"] },
+  { rime: "an", letters: ["c","m","p","v","r","t","f","d"], real: ["can","man","pan","van","ran","tan","fan"] },
+  { rime: "ig", letters: ["b","d","f","p","w","j","q","k"], real: ["big","dig","fig","pig","wig","jig"] },
+  { rime: "og", letters: ["d","f","h","j","l","b","c","w"], real: ["dog","fog","hog","jog","log","bog","cog"] },
+  { rime: "ug", letters: ["b","h","j","m","r","t","d","f"], real: ["bug","hug","jug","mug","rug","tug","dug"] }
+];
+
+const icons = {
+  cat: '<svg viewBox="0 0 100 100"><polygon points="28,38 38,14 47,40" fill="#F0997B"/><polygon points="72,38 62,14 53,40" fill="#F0997B"/><circle cx="50" cy="58" r="27" fill="#F0997B"/><circle cx="40" cy="55" r="3" fill="#4A1B0C"/><circle cx="60" cy="55" r="3" fill="#4A1B0C"/><polygon points="46,64 54,64 50,69" fill="#4A1B0C"/><line x1="20" y1="60" x2="38" y2="63" stroke="#4A1B0C" stroke-width="2"/><line x1="20" y1="70" x2="38" y2="68" stroke="#4A1B0C" stroke-width="2"/><line x1="80" y1="60" x2="62" y2="63" stroke="#4A1B0C" stroke-width="2"/><line x1="80" y1="70" x2="62" y2="68" stroke="#4A1B0C" stroke-width="2"/></svg>',
+  bat: '<svg viewBox="0 0 100 100"><path d="M50,50 C30,15 5,30 12,58 C25,50 38,58 45,52 Z" fill="#5F5E5A"/><path d="M50,50 C70,15 95,30 88,58 C75,50 62,58 55,52 Z" fill="#5F5E5A"/><ellipse cx="50" cy="55" rx="9" ry="14" fill="#5F5E5A"/><polygon points="43,42 46,30 50,42" fill="#5F5E5A"/><polygon points="57,42 54,30 50,42" fill="#5F5E5A"/><circle cx="46" cy="53" r="2" fill="#fff"/><circle cx="54" cy="53" r="2" fill="#fff"/></svg>',
+  hat: '<svg viewBox="0 0 100 100"><ellipse cx="50" cy="72" rx="36" ry="9" fill="#3C3489"/><rect x="34" y="28" width="32" height="42" rx="4" fill="#534AB7"/><rect x="34" y="58" width="32" height="8" fill="#D85A30"/></svg>',
+  mat: '<svg viewBox="0 0 100 100"><rect x="14" y="34" width="72" height="42" rx="8" fill="#BA7517"/><line x1="22" y1="44" x2="78" y2="44" stroke="#FAC775" stroke-width="3"/><line x1="22" y1="55" x2="78" y2="55" stroke="#FAC775" stroke-width="3"/><line x1="22" y1="66" x2="78" y2="66" stroke="#FAC775" stroke-width="3"/></svg>',
+  sat: '<svg viewBox="0 0 100 100"><circle cx="50" cy="34" r="11" fill="#7F77DD"/><rect x="42" y="45" width="16" height="18" fill="#7F77DD"/><path d="M42,63 L30,72 M58,63 L70,72 M42,63 L42,80 M58,63 L58,80" stroke="#534AB7" stroke-width="6" stroke-linecap="round" fill="none"/></svg>',
+  rat: '<svg viewBox="0 0 100 100"><path d="M78,60 Q95,45 90,30" stroke="#888780" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="48" cy="58" rx="26" ry="18" fill="#888780"/><polygon points="20,55 6,50 20,65" fill="#888780"/><circle cx="66" cy="48" r="9" fill="#B4B2A9"/><circle cx="30" cy="55" r="2.5" fill="#2C2C2A"/></svg>',
+  can: '<svg viewBox="0 0 100 100"><rect x="34" y="26" width="32" height="50" fill="#85B7EB"/><ellipse cx="50" cy="26" rx="16" ry="6" fill="#378ADD"/><ellipse cx="50" cy="76" rx="16" ry="6" fill="#185FA5"/></svg>',
+  man: '<svg viewBox="0 0 100 100"><circle cx="50" cy="28" r="12" fill="#FAC775"/><line x1="50" y1="40" x2="50" y2="68" stroke="#854F0B" stroke-width="7" stroke-linecap="round"/><line x1="50" y1="48" x2="32" y2="60" stroke="#854F0B" stroke-width="6" stroke-linecap="round"/><line x1="50" y1="48" x2="68" y2="60" stroke="#854F0B" stroke-width="6" stroke-linecap="round"/><line x1="50" y1="68" x2="38" y2="88" stroke="#854F0B" stroke-width="6" stroke-linecap="round"/><line x1="50" y1="68" x2="62" y2="88" stroke="#854F0B" stroke-width="6" stroke-linecap="round"/></svg>',
+  pan: '<svg viewBox="0 0 100 100"><circle cx="42" cy="52" r="22" fill="#5F5E5A"/><rect x="62" y="48" width="30" height="7" rx="3" fill="#5F5E5A"/><ellipse cx="42" cy="46" rx="16" ry="6" fill="#888780"/></svg>',
+  van: '<svg viewBox="0 0 100 100"><rect x="14" y="38" width="66" height="26" rx="8" fill="#D4537E"/><rect x="56" y="26" width="24" height="20" rx="4" fill="#D4537E"/><circle cx="30" cy="66" r="8" fill="#2C2C2A"/><circle cx="68" cy="66" r="8" fill="#2C2C2A"/><rect x="60" y="32" width="14" height="10" fill="#FBEAF0"/></svg>',
+  ran: '<svg viewBox="0 0 100 100"><circle cx="46" cy="26" r="10" fill="#D85A30"/><line x1="46" y1="36" x2="54" y2="60" stroke="#993C1D" stroke-width="7" stroke-linecap="round"/><line x1="50" y1="42" x2="70" y2="34" stroke="#993C1D" stroke-width="6" stroke-linecap="round"/><line x1="50" y1="50" x2="30" y2="52" stroke="#993C1D" stroke-width="6" stroke-linecap="round"/><line x1="54" y1="60" x2="74" y2="70" stroke="#993C1D" stroke-width="6" stroke-linecap="round"/><line x1="54" y1="60" x2="40" y2="84" stroke="#993C1D" stroke-width="6" stroke-linecap="round"/></svg>',
+  tan: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="18" fill="#FAC775"/><g stroke="#EF9F27" stroke-width="4" stroke-linecap="round"><line x1="50" y1="14" x2="50" y2="24"/><line x1="50" y1="76" x2="50" y2="86"/><line x1="14" y1="50" x2="24" y2="50"/><line x1="76" y1="50" x2="86" y2="50"/><line x1="24" y1="24" x2="31" y2="31"/><line x1="69" y1="69" x2="76" y2="76"/><line x1="76" y1="24" x2="69" y2="31"/><line x1="31" y1="69" x2="24" y2="76"/></g></svg>',
+  fan: '<svg viewBox="0 0 100 100"><g fill="#85B7EB"><ellipse cx="50" cy="26" rx="10" ry="18"/><ellipse cx="74" cy="50" rx="18" ry="10"/><ellipse cx="50" cy="74" rx="10" ry="18"/><ellipse cx="26" cy="50" rx="18" ry="10"/></g><circle cx="50" cy="50" r="9" fill="#185FA5"/></svg>',
+  big: '<svg viewBox="0 0 100 100"><circle cx="34" cy="66" r="10" fill="#AFA9EC"/><circle cx="62" cy="46" r="26" fill="#7F77DD"/></svg>',
+  dig: '<svg viewBox="0 0 100 100"><rect x="46" y="16" width="8" height="46" rx="3" fill="#BA7517"/><path d="M32,58 L68,58 L58,80 L42,80 Z" fill="#888780"/></svg>',
+  fig: '<svg viewBox="0 0 100 100"><path d="M50,20 Q58,30 54,36" stroke="#639922" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="50" cy="60" rx="24" ry="30" fill="#993556"/><ellipse cx="50" cy="60" rx="14" ry="20" fill="#D4537E"/></svg>',
+  pig: '<svg viewBox="0 0 100 100"><ellipse cx="50" cy="56" rx="30" ry="24" fill="#F0997B"/><polygon points="24,40 14,26 32,32" fill="#F0997B"/><polygon points="76,40 86,26 68,32" fill="#F0997B"/><ellipse cx="50" cy="62" rx="12" ry="9" fill="#D85A30"/><circle cx="45" cy="62" r="2" fill="#4A1B0C"/><circle cx="55" cy="62" r="2" fill="#4A1B0C"/><circle cx="36" cy="50" r="2.5" fill="#4A1B0C"/><circle cx="64" cy="50" r="2.5" fill="#4A1B0C"/></svg>',
+  wig: '<svg viewBox="0 0 100 100"><path d="M22,60 Q18,26 50,22 Q82,26 78,60 Q70,44 62,58 Q54,40 46,58 Q38,42 30,58 Q26,50 22,60 Z" fill="#854F0B"/></svg>',
+  jig: '<svg viewBox="0 0 100 100"><circle cx="50" cy="26" r="10" fill="#D4537E"/><line x1="50" y1="36" x2="46" y2="60" stroke="#993556" stroke-width="7" stroke-linecap="round"/><line x1="48" y1="42" x2="26" y2="30" stroke="#993556" stroke-width="6" stroke-linecap="round"/><line x1="48" y1="42" x2="72" y2="30" stroke="#993556" stroke-width="6" stroke-linecap="round"/><line x1="46" y1="60" x2="28" y2="60" stroke="#993556" stroke-width="6" stroke-linecap="round"/><line x1="46" y1="60" x2="66" y2="80" stroke="#993556" stroke-width="6" stroke-linecap="round"/></svg>',
+  dog: '<svg viewBox="0 0 100 100"><ellipse cx="30" cy="46" rx="12" ry="18" fill="#BA7517" transform="rotate(-20 30 46)"/><ellipse cx="70" cy="46" rx="12" ry="18" fill="#BA7517" transform="rotate(20 70 46)"/><circle cx="50" cy="56" r="26" fill="#D19A5C"/><ellipse cx="50" cy="64" rx="10" ry="7" fill="#4A1B0C"/><circle cx="40" cy="52" r="3" fill="#4A1B0C"/><circle cx="60" cy="52" r="3" fill="#4A1B0C"/><path d="M50,70 Q50,78 58,76" stroke="#D85A30" stroke-width="4" fill="none" stroke-linecap="round"/></svg>',
+  fog: '<svg viewBox="0 0 100 100"><ellipse cx="42" cy="42" rx="22" ry="14" fill="#B4B2A9"/><ellipse cx="62" cy="48" rx="20" ry="13" fill="#D3D1C7"/><line x1="16" y1="66" x2="84" y2="66" stroke="#D3D1C7" stroke-width="5" stroke-linecap="round"/><line x1="22" y1="78" x2="78" y2="78" stroke="#D3D1C7" stroke-width="5" stroke-linecap="round"/></svg>',
+  hog: '<svg viewBox="0 0 100 100"><ellipse cx="50" cy="58" rx="34" ry="26" fill="#F0997B"/><polygon points="22,42 12,26 32,34" fill="#F0997B"/><polygon points="78,42 88,26 68,34" fill="#F0997B"/><ellipse cx="50" cy="64" rx="13" ry="10" fill="#D85A30"/><circle cx="45" cy="64" r="2.5" fill="#4A1B0C"/><circle cx="55" cy="64" r="2.5" fill="#4A1B0C"/></svg>',
+  jog: '<svg viewBox="0 0 100 100"><circle cx="42" cy="26" r="10" fill="#639922"/><line x1="42" y1="36" x2="52" y2="60" stroke="#3B6D11" stroke-width="7" stroke-linecap="round"/><line x1="46" y1="42" x2="68" y2="32" stroke="#3B6D11" stroke-width="6" stroke-linecap="round"/><line x1="48" y1="50" x2="28" y2="52" stroke="#3B6D11" stroke-width="6" stroke-linecap="round"/><line x1="52" y1="60" x2="72" y2="68" stroke="#3B6D11" stroke-width="6" stroke-linecap="round"/><line x1="52" y1="60" x2="38" y2="84" stroke="#3B6D11" stroke-width="6" stroke-linecap="round"/></svg>',
+  log: '<svg viewBox="0 0 100 100"><rect x="16" y="38" width="68" height="26" rx="4" fill="#854F0B"/><ellipse cx="16" cy="51" rx="8" ry="13" fill="#BA7517"/><circle cx="16" cy="51" r="4" fill="#633806"/></svg>',
+  bog: '<svg viewBox="0 0 100 100"><ellipse cx="50" cy="66" rx="38" ry="16" fill="#639922"/><path d="M22,60 Q34,50 46,60 Q58,50 70,60" stroke="#3B6D11" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="36" cy="46" r="4" fill="#97C459"/><circle cx="60" cy="42" r="3" fill="#97C459"/></svg>',
+  cog: '<svg viewBox="0 0 100 100"><g fill="#888780"><rect x="46" y="10" width="8" height="16"/><rect x="46" y="74" width="8" height="16"/><rect x="10" y="46" width="16" height="8"/><rect x="74" y="46" width="16" height="8"/><rect x="22" y="22" width="10" height="16" transform="rotate(45 27 30)"/><rect x="68" y="62" width="10" height="16" transform="rotate(45 73 70)"/><rect x="62" y="22" width="16" height="10" transform="rotate(-45 70 27)"/><rect x="22" y="62" width="16" height="10" transform="rotate(-45 30 67)"/></g><circle cx="50" cy="50" r="22" fill="#5F5E5A"/><circle cx="50" cy="50" r="9" fill="#F1EFE8"/></svg>',
+  bug: '<svg viewBox="0 0 100 100"><ellipse cx="50" cy="58" rx="20" ry="26" fill="#639922"/><line x1="50" y1="34" x2="50" y2="82" stroke="#3B6D11" stroke-width="2"/><circle cx="50" cy="30" r="9" fill="#3B6D11"/><line x1="44" y1="24" x2="36" y2="14" stroke="#3B6D11" stroke-width="3" stroke-linecap="round"/><line x1="56" y1="24" x2="64" y2="14" stroke="#3B6D11" stroke-width="3" stroke-linecap="round"/><line x1="32" y1="46" x2="18" y2="40" stroke="#3B6D11" stroke-width="4" stroke-linecap="round"/><line x1="32" y1="60" x2="16" y2="60" stroke="#3B6D11" stroke-width="4" stroke-linecap="round"/><line x1="32" y1="74" x2="18" y2="80" stroke="#3B6D11" stroke-width="4" stroke-linecap="round"/><line x1="68" y1="46" x2="82" y2="40" stroke="#3B6D11" stroke-width="4" stroke-linecap="round"/><line x1="68" y1="60" x2="84" y2="60" stroke="#3B6D11" stroke-width="4" stroke-linecap="round"/><line x1="68" y1="74" x2="82" y2="80" stroke="#3B6D11" stroke-width="4" stroke-linecap="round"/></svg>',
+  hug: '<svg viewBox="0 0 100 100"><circle cx="34" cy="34" r="12" fill="#D4537E"/><circle cx="66" cy="34" r="12" fill="#D85A30"/><path d="M20,50 Q50,80 80,50 Q60,66 50,58 Q40,66 20,50 Z" fill="#D4537E"/></svg>',
+  jug: '<svg viewBox="0 0 100 100"><path d="M38,30 Q30,30 30,40 L28,72 Q28,80 40,80 L60,80 Q72,80 70,68 L64,40 Q64,30 56,30 Z" fill="#378ADD"/><rect x="40" y="20" width="16" height="14" rx="4" fill="#185FA5"/><path d="M70,44 Q84,44 84,58 Q84,68 70,66" stroke="#185FA5" stroke-width="6" fill="none"/></svg>',
+  mug: '<svg viewBox="0 0 100 100"><rect x="26" y="34" width="42" height="42" rx="6" fill="#D85A30"/><path d="M68,42 Q88,42 88,56 Q88,68 68,66" stroke="#993C1D" stroke-width="7" fill="none"/></svg>',
+  rug: '<svg viewBox="0 0 100 100"><rect x="12" y="30" width="76" height="44" rx="6" fill="#993556"/><rect x="22" y="40" width="56" height="24" fill="none" stroke="#FBEAF0" stroke-width="3"/><circle cx="50" cy="52" r="6" fill="#FBEAF0"/></svg>',
+  tug: '<svg viewBox="0 0 100 100"><path d="M14,50 Q30,36 50,50 Q70,64 86,50" stroke="#BA7517" stroke-width="6" fill="none" stroke-linecap="round"/><polygon points="14,50 24,44 24,56" fill="#854F0B"/><polygon points="86,50 76,44 76,56" fill="#854F0B"/></svg>',
+  dug: '<svg viewBox="0 0 100 100"><ellipse cx="50" cy="62" rx="30" ry="14" fill="#4A1B0C"/><ellipse cx="50" cy="62" rx="22" ry="9" fill="#2C1408"/><polygon points="20,60 10,48 28,52" fill="#BA7517"/><polygon points="80,60 90,48 72,52" fill="#BA7517"/></svg>'
+};
+const fallbackIcon = '<svg viewBox="0 0 100 100"><polygon points="50,10 58,40 88,40 64,58 72,88 50,70 28,88 36,58 12,40 42,40" fill="#EF9F27"/></svg>';
+
+let familyIndex = 0;
+let letterIndex = 0;
+let found = new Set();
+let totalStars = 0;
+
+const letterBox = document.getElementById("letterBox");
+const letterChar = document.getElementById("letterChar");
+const rimeBox = document.getElementById("rimeBox");
+const wordRevealWrap = document.getElementById("wordRevealWrap");
+const wordReveal = document.getElementById("wordReveal");
+const wordImage = document.getElementById("wordImage");
+const chipRow = document.getElementById("chipRow");
+const starCount = document.getElementById("starCount");
+
+function currentFamily() { return families[familyIndex]; }
+
+function render() {
+  const fam = currentFamily();
+  letterChar.textContent = fam.letters[letterIndex];
+  rimeBox.textContent = fam.rime;
+  chipRow.innerHTML = "";
+  found.forEach(function(w) {
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.textContent = w;
+    chipRow.appendChild(chip);
+  });
+  starCount.textContent = totalStars;
+}
+
+function checkWord(speak) {
+  const fam = currentFamily();
+  const word = fam.letters[letterIndex] + fam.rime;
+  if (fam.real.indexOf(word) !== -1 && !found.has(word)) {
+    found.add(word);
+    totalStars++;
+    wordReveal.textContent = word;
+    wordImage.innerHTML = icons[word] || fallbackIcon;
+    wordRevealWrap.style.opacity = "1";
+    wordRevealWrap.style.transform = "scale(1)";
+    letterBox.style.transform = "scale(1.15)";
+    letterBox.style.transition = "transform 0.25s";
+    setTimeout(function() { letterBox.style.transform = "scale(1)"; }, 250);
+    if (speak) {
+      try {
+        const utter = new SpeechSynthesisUtterance(word);
+        utter.rate = 0.8;
+        utter.pitch = 1.1;
+        window.speechSynthesis.speak(utter);
+      } catch(e) {}
+    }
+    render();
+    setTimeout(function() {
+      wordRevealWrap.style.opacity = "0";
+      wordRevealWrap.style.transform = "scale(0.85)";
+    }, 2200);
+  }
+}
+
+function changeLetter(delta) {
+  const fam = currentFamily();
+  letterIndex = (letterIndex + delta + fam.letters.length) % fam.letters.length;
+  render();
+  checkWord(true);
+}
+
+function addTapListener(el, handler) {
+  let handled = false;
+  el.addEventListener("touchend", function(e) {
+    e.preventDefault();
+    handled = true;
+    handler();
+    setTimeout(function() { handled = false; }, 350);
+  }, { passive: false });
+  el.addEventListener("click", function(e) {
+    if (handled) { return; }
+    handler();
+  });
+}
+
+addTapListener(document.getElementById("upBtn"), function() { changeLetter(-1); });
+addTapListener(document.getElementById("downBtn"), function() { changeLetter(1); });
+addTapListener(document.getElementById("newFamilyBtn"), function() {
+  familyIndex = (familyIndex + 1) % families.length;
+  letterIndex = 0;
+  found = new Set();
+  render();
+  checkWord(false);
+});
+
+let dragStartY = null;
+letterBox.addEventListener("pointerdown", function(e) {
+  dragStartY = e.clientY;
+  letterBox.setPointerCapture(e.pointerId);
+});
+letterBox.addEventListener("pointermove", function(e) {
+  if (dragStartY === null) return;
+  const step = 32;
+  if (e.clientY - dragStartY > step) { changeLetter(1); dragStartY = e.clientY; }
+  else if (e.clientY - dragStartY < -step) { changeLetter(-1); dragStartY = e.clientY; }
+});
+letterBox.addEventListener("pointerup", function() { dragStartY = null; });
+letterBox.addEventListener("pointercancel", function() { dragStartY = null; });
+
+render();
+checkWord(false);
+</script>
+
+</body>
+</html>
