@@ -1,0 +1,137 @@
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;">Word family slider game: swipe or use arrows to change the first letter and discover real words</h2>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+  <div style="display:flex;align-items:center;gap:6px;">
+    <i class="ti ti-star" style="font-size:20px;color:var(--text-accent);" aria-hidden="true"></i>
+    <span id="starCount" style="font-size:16px;font-weight:500;">0</span>
+    <span style="font-size:13px;color:var(--text-secondary);">words found</span>
+  </div>
+  <button id="newFamilyBtn">New family <i class="ti ti-arrow-right" style="font-size:16px;vertical-align:-3px;" aria-hidden="true"></i></button>
+</div>
+
+<div style="background:var(--surface-1);border-radius:12px;padding:2rem 1rem;text-align:center;">
+  <div style="display:flex;align-items:center;justify-content:center;gap:0;user-select:none;touch-action:none;" id="sliderArea">
+    <button id="upBtn" aria-label="Previous letter" style="width:44px;height:44px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;margin-right:12px;"><i class="ti ti-chevron-up" style="font-size:20px;" aria-hidden="true"></i></button>
+    <div id="letterBox" style="width:110px;height:110px;background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:500;cursor:grab;">c</div>
+    <div id="rimeBox" style="font-size:56px;font-weight:500;padding:0 12px;color:var(--text-secondary);">at</div>
+    <button id="downBtn" aria-label="Next letter" style="width:44px;height:44px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;margin-left:12px;"><i class="ti ti-chevron-down" style="font-size:20px;" aria-hidden="true"></i></button>
+  </div>
+
+  <div id="feedbackArea" style="min-height:64px;margin-top:1.5rem;display:flex;align-items:center;justify-content:center;">
+    <span id="wordReveal" style="font-size:22px;font-weight:500;color:var(--text-accent);opacity:0;transition:opacity 0.2s;"></span>
+  </div>
+</div>
+
+<div style="margin-top:1.25rem;">
+  <p style="font-size:13px;color:var(--text-secondary);margin:0 0 8px;">Words found in this family</p>
+  <div id="chipRow" style="display:flex;flex-wrap:wrap;gap:8px;min-height:32px;"></div>
+</div>
+
+<script>
+const families = [
+  { rime: "at", letters: ["c","b","h","m","s","r","d","g"], real: ["cat","bat","hat","mat","sat","rat"] },
+  { rime: "an", letters: ["c","m","p","v","r","t","f","d"], real: ["can","man","pan","van","ran","tan","fan"] },
+  { rime: "ig", letters: ["b","d","f","p","w","j","q","k"], real: ["big","dig","fig","pig","wig","jig"] },
+  { rime: "og", letters: ["d","f","h","j","l","b","c","w"], real: ["dog","fog","hog","jog","log","bog","cog"] },
+  { rime: "ug", letters: ["b","h","j","m","r","t","d","f"], real: ["bug","hug","jug","mug","rug","tug","dug"] }
+];
+
+let familyIndex = 0;
+let letterIndex = 0;
+let found = new Set();
+let totalStars = 0;
+
+const letterBox = document.getElementById("letterBox");
+const rimeBox = document.getElementById("rimeBox");
+const wordReveal = document.getElementById("wordReveal");
+const chipRow = document.getElementById("chipRow");
+const starCount = document.getElementById("starCount");
+
+function currentFamily() { return families[familyIndex]; }
+
+function render() {
+  const fam = currentFamily();
+  letterBox.textContent = fam.letters[letterIndex];
+  rimeBox.textContent = fam.rime;
+  chipRow.innerHTML = "";
+  found.forEach(w => {
+    const chip = document.createElement("span");
+    chip.textContent = w;
+    chip.style.cssText = "background:var(--bg-success);color:var(--text-success);font-size:13px;padding:4px 10px;border-radius:var(--radius);";
+    chipRow.appendChild(chip);
+  });
+  starCount.textContent = totalStars;
+}
+
+function checkWord() {
+  const fam = currentFamily();
+  const letter = fam.letters[letterIndex];
+  const word = letter + fam.rime;
+  if (fam.real.includes(word) && !found.has(word)) {
+    found.add(word);
+    totalStars++;
+    wordReveal.textContent = word;
+    wordReveal.style.opacity = "1";
+    letterBox.style.transform = "scale(1.15)";
+    letterBox.style.transition = "transform 0.25s";
+    setTimeout(() => { letterBox.style.transform = "scale(1)"; }, 250);
+    try {
+      const utter = new SpeechSynthesisUtterance(word);
+      utter.rate = 0.85;
+      utter.pitch = 1.1;
+      window.speechSynthesis.speak(utter);
+    } catch(e) {}
+    render();
+    setTimeout(() => { wordReveal.style.opacity = "0"; }, 1800);
+  }
+}
+
+function changeLetter(delta) {
+  const fam = currentFamily();
+  letterIndex = (letterIndex + delta + fam.letters.length) % fam.letters.length;
+  render();
+  checkWord();
+}
+
+document.getElementById("upBtn").addEventListener("click", () => changeLetter(-1));
+document.getElementById("downBtn").addEventListener("click", () => changeLetter(1));
+
+document.getElementById("newFamilyBtn").addEventListener("click", () => {
+  familyIndex = (familyIndex + 1) % families.length;
+  letterIndex = 0;
+  found = new Set();
+  render();
+});
+
+let dragStartY = null;
+let dragAccum = 0;
+letterBox.addEventListener("pointerdown", e => {
+  dragStartY = e.clientY;
+  dragAccum = 0;
+  letterBox.style.cursor = "grabbing";
+  letterBox.setPointerCapture(e.pointerId);
+});
+letterBox.addEventListener("pointermove", e => {
+  if (dragStartY === null) return;
+  const delta = e.clientY - dragStartY;
+  dragAccum += delta - dragAccum;
+  if (delta - dragAccum === 0) {}
+  const step = 36;
+  if (e.clientY - dragStartY > step) {
+    changeLetter(1);
+    dragStartY = e.clientY;
+  } else if (e.clientY - dragStartY < -step) {
+    changeLetter(-1);
+    dragStartY = e.clientY;
+  }
+});
+letterBox.addEventListener("pointerup", e => {
+  dragStartY = null;
+  letterBox.style.cursor = "grab";
+});
+letterBox.addEventListener("pointercancel", () => {
+  dragStartY = null;
+  letterBox.style.cursor = "grab";
+});
+
+render();
+</script>
