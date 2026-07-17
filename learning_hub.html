@@ -511,8 +511,10 @@
 <div id="view-readit" class="view" style="display:none;">
   <button class="home-btn" id="readitHomeBtn">&#8592; Home</button>
   <div class="instructions">
-    <p>Tap each word to hear it</p>
-    <p class="sub">Then try to say the whole sentence!</p>
+    <p>1. Tap each word to hear it</p>
+    <p>2. Tap "Read it all" to hear the sentence</p>
+    <p>3. Tap "Say it!" and read it out loud</p>
+    <p class="sub">Take your time! Tap the words as many times as you like</p>
   </div>
   <div class="game-topbar">
     <div class="stars"><span class="star-icon">&#9733;</span><span id="readitStarCount">0</span></div>
@@ -943,7 +945,7 @@ function startMicDetection() {
   if (readAttempted) return;
 
   sayBtn.className = "say-btn listening";
-  micStatus.textContent = "Listening... try to say it!";
+  micStatus.textContent = "I'm listening... say the sentence out loud!";
   micListening = true;
 
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -961,19 +963,25 @@ function startMicDetection() {
 
     var dataArray = new Uint8Array(micAnalyser.frequencyBinCount);
     var loudFrames = 0;
-    var requiredFrames = 8;
+    var requiredFrames = 18;
+    var startTime = Date.now();
+    var ignoreMs = 800;
 
     function detectLoop() {
       if (!micListening) return;
+      if (Date.now() - startTime < ignoreMs) {
+        requestAnimationFrame(detectLoop);
+        return;
+      }
       micAnalyser.getByteFrequencyData(dataArray);
       var sum = 0;
       for (var i = 0; i < dataArray.length; i++) sum += dataArray[i];
       var avg = sum / dataArray.length;
 
-      if (avg > 18) {
+      if (avg > 40) {
         loudFrames++;
       } else {
-        if (loudFrames > 0) loudFrames--;
+        if (loudFrames > 0) loudFrames = Math.max(0, loudFrames - 2);
       }
 
       if (loudFrames >= requiredFrames) {
@@ -991,7 +999,7 @@ function startMicDetection() {
         micStatus.textContent = "Tap Say it! to try again";
         micListening = false;
       }
-    }, 6000);
+    }, 8000);
 
   }).catch(function() {
     micFallback();
