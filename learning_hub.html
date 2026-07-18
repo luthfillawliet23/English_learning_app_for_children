@@ -962,14 +962,18 @@ function startMicDetection() {
     source.connect(micAnalyser);
 
     var dataArray = new Uint8Array(micAnalyser.frequencyBinCount);
-    var loudFrames = 0;
-    var requiredFrames = 18;
+    var speechDetected = false;
+    var speechStartTime = 0;
+    var speakDurationMs = 2500;
     var startTime = Date.now();
     var ignoreMs = 800;
+    var loudFrames = 0;
+    var needLoudFrames = 10;
 
     function detectLoop() {
       if (!micListening) return;
-      if (Date.now() - startTime < ignoreMs) {
+      var now = Date.now();
+      if (now - startTime < ignoreMs) {
         requestAnimationFrame(detectLoop);
         return;
       }
@@ -978,15 +982,22 @@ function startMicDetection() {
       for (var i = 0; i < dataArray.length; i++) sum += dataArray[i];
       var avg = sum / dataArray.length;
 
-      if (avg > 40) {
-        loudFrames++;
+      if (!speechDetected) {
+        if (avg > 40) {
+          loudFrames++;
+        } else {
+          if (loudFrames > 0) loudFrames = Math.max(0, loudFrames - 2);
+        }
+        if (loudFrames >= needLoudFrames) {
+          speechDetected = true;
+          speechStartTime = now;
+          micStatus.textContent = "I can hear you! Keep going...";
+        }
       } else {
-        if (loudFrames > 0) loudFrames = Math.max(0, loudFrames - 2);
-      }
-
-      if (loudFrames >= requiredFrames) {
-        micSuccess();
-        return;
+        if (now - speechStartTime >= speakDurationMs) {
+          micSuccess();
+          return;
+        }
       }
       requestAnimationFrame(detectLoop);
     }
@@ -999,7 +1010,7 @@ function startMicDetection() {
         micStatus.textContent = "Tap Say it! to try again";
         micListening = false;
       }
-    }, 8000);
+    }, 10000);
 
   }).catch(function() {
     micFallback();
